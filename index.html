@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Agent Collaboration Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --accent: #e94560;
+            --accent-blue: #0f3460;
+            --text-primary: #eee;
+            --text-secondary: #a0a0a0;
+            --success: #00d9a5;
+            --warning: #ffc107;
+            --danger: #e94560;
+            --new-task: #4fc3f7;
+            --processing: #ffb74d;
+            --done: #81c784;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--accent-blue));
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff6b8a;
+            transform: translateY(-2px);
+        }
+
+        /* Agent Cards */
+        .agents-section {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .agent-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .agent-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-active { background: var(--success); }
+        .status-idle { background: var(--warning); }
+        .status-offline { background: var(--danger); }
+
+        .agent-model {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        /* Conversations */
+        .conversations-section {
+            padding: 0 30px 30px;
+        }
+
+        .conversations-list {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+
+        .conv-arrow {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .conv-message {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .conv-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Kanban Board */
+        .kanban-section {
+            padding: 0 30px 30px;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .kanban-column {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid;
+        }
+
+        .column-new .column-header { border-color: var(--new-task); }
+        .column-processing .column-header { border-color: var(--processing); }
+        .column-done .column-header { border-color: var(--done); }
+
+        .column-title {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-count {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .task-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: grab;
+            transition: all 0.3s;
+            border-left: 3px solid;
+        }
+
+        .column-new .task-card { border-left-color: var(--new-task); }
+        .column-processing .task-card { border-left-color: var(--processing); }
+        .column-done .task-card { border-left-color: var(--done); }
+
+        .task-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .task-agent {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .processing .task-card {
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+            
+            .agents-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>🤖 Agent Collaboration Dashboard</h1>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="openModal()">+ New Task</button>
+        </div>
+    </header>
+
+    <!-- Agent Cards -->
+    <section class="agents-section">
+        <h2 class="section-title">👥 Agents</h2>
+        <div class="agents-grid" id="agentsGrid">
+            <!-- Agent cards will be rendered here -->
+        </div>
+    </section>
+
+    <!-- Conversations -->
+    <section class="conversations-section">
+        <h2 class="section-title">💬 Recent Conversations</h2>
+        <div class="conversations-list" id="conversationsList">
+            <!-- Conversations will be rendered here -->
+        </div>
+    </section>
+
+    <!-- Kanban Board -->
+    <section class="kanban-section">
+        <h2 class="section-title">📋 Kanban Board</h2>
+        <div class="kanban-board">
+            <!-- New Column -->
+            <div class="kanban-column column-new" id="newColumn">
+                <div class="column-header">
+                    <span class="column-title">🆕 New</span>
+                    <span class="task-count" id="newCount">0</span>
+                </div>
+                <div class="tasks-container" id="newTasks">
+                    <!-- Tasks will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Processing Column -->
+            <div class="kanban-column column-processing" id="processingColumn">
+                <div class="column-header">
+                    <span class="column-title">⚡ Processing</span>
+                    <span class="task-count" id="processingCount">0</span>
+                </div>
+                <div class="tasks-container" id="processingTasks">
+                    <!-- Tasks will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Done Column -->
+            <div class="kanban-column column-done" id="doneColumn">
+                <div class="column-header">
+                    <span class="column-title">✅ Done</span>
+                    <span class="task-count" id="doneCount">0</span>
+                </div>
+                <div class="tasks-container" id="doneTasks">
+                    <!-- Tasks will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        Agent Collaboration Dashboard • Built by Devlopino & WordPressino • 2026
+    </footer>
+
+    <!-- New Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h2>📝 Create New Task</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="taskTitle" placeholder="Enter task title..." required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" placeholder="Task description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Assign To</label>
+                    <select id="taskAgent">
+                        <option value="seonino">Seonino</option>
+                        <option value="wordpressino">WordPressino</option>
+                        <option value="devlopino">Devlopino</option>
+                        <option value="writino">Writino</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Agent Data
+        const agents = [
+            { id: 'seonino', name: 'Seonino', status: 'active', model: 'GLM-4.7', avatar: '📝' },
+            { id: 'wordpressino', name: 'WordPressino', status: 'active', model: 'Qwen3.5', avatar: '🎨' },
+            { id: 'devlopino', name: 'Devlopino', status: 'idle', model: 'MiniMax-M2.5', avatar: '🔧' },
+            { id: 'writino', name: 'Writino', status: 'offline', model: 'Claude', avatar: '✍️' }
+        ];
+
+        // Sample Conversations
+        let conversations = [
+            { from: 'seonino', to: 'wordpressino', message: 'Here\'s the optimized blog post for Windows 11 vs 10 comparison. Ready for review!', time: '2 min ago' },
+            { from: 'devlopino', to: 'seonino', message: 'Schema verification complete! All 43 products have valid Product schema. Ready for GSC testing.', time: '5 min ago' },
+            { from: 'wordpressino', to: 'devlopino', message: 'Homepage update deployed. Added trust badges and testimonials section.', time: '12 min ago' },
+            { from: 'seonino', to: 'devlopino', message: 'Can you check why the Office 2024 page isn\'t indexing?', time: '18 min ago' },
+            { from: 'devlopino', to: 'seonino', message: 'On it! Looks like canonical tag issue. Fixing now.', time: '15 min ago' }
+        ];
+
+        // Kanban Tasks
+        let tasks = [
+            { id: 1, title: 'Create 5 Buying Guides', agent: 'seonino', status: 'processing', time: '10 min ago' },
+            { id: 2, title: 'Optimize Homepage CTAs', agent: 'wordpressino', status: 'new', time: '5 min ago' },
+            { id: 3, title: 'Fix Schema Errors', agent: 'devlopino', status: 'done', time: '30 min ago' },
+            { id: 4, title: 'Set Up Review System', agent: 'wordpressino', status: 'new', time: '3 min ago' },
+            { id: 5, title: 'Diagnose Indexing Issue', agent: 'devlopino', status: 'processing', time: '15 min ago' },
+            { id: 6, title: 'Write Meta Descriptions', agent: 'seonino', status: 'done', time: '1 hour ago' }
+        ];
+
+        // Render Agents
+        function renderAgents() {
+            const grid = document.getElementById('agentsGrid');
+            grid.innerHTML = agents.map(agent => `
+                <div class="agent-card">
+                    <div class="agent-avatar">${agent.avatar}</div>
+                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-status">
+                        <span class="status-dot status-${agent.status}"></span>
+                        ${agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
+                    </div>
+                    <div class="agent-model">${agent.model}</div>
+                </div>
+            `).join('');
+        }
+
+        // Render Conversations
+        function renderConversations() {
+            const list = document.getElementById('conversationsList');
+            list.innerHTML = conversations.map(conv => `
+                <div class="conversation-item">
+                    <span style="font-weight:bold;">${conv.from}</span>
+                    <span class="conv-arrow">→</span>
+                    <span style="font-weight:bold;">${conv.to}:</span>
+                    <span class="conv-message">${conv.message}</span>
+                    <span class="conv-time">${conv.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // Render Kanban Tasks
+        function renderTasks() {
+            const newTasks = tasks.filter(t => t.status === 'new');
+            const processingTasks = tasks.filter(t => t.status === 'processing');
+            const doneTasks = tasks.filter(t => t.status === 'done');
+
+            document.getElementById('newCount').textContent = newTasks.length;
+            document.getElementById('processingCount').textContent = processingTasks.length;
+            document.getElementById('doneCount').textContent = doneTasks.length;
+
+            const renderTaskCard = (task) => `
+                <div class="task-card" draggable="true" data-id="${task.id}">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-meta">
+                        <span class="task-agent">👤 ${task.agent}</span>
+                        <span class="task-time">${task.time}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('newTasks').innerHTML = newTasks.map(renderTaskCard).join('');
+            document.getElementById('processingTasks').innerHTML = processingTasks.map(renderTaskCard).join('');
+            document.getElementById('doneTasks').innerHTML = doneTasks.map(renderTaskCard).join('');
+
+            // Add drag event listeners
+            document.querySelectorAll('.task-card').forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        // Drag and Drop
+        let draggedTaskId = null;
+
+        function handleDragStart(e) {
+            draggedTaskId = parseInt(e.target.dataset.id);
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Initialize drag and drop on columns
+        document.querySelectorAll('.kanban-column').forEach(column => {
+            column.addEventListener('dragover', e => {
+                e.preventDefault();
+                column.style.background = 'rgba(255,255,255,0.05)';
+            });
+            column.addEventListener('dragleave', e => {
+                column.style.background = '';
+            });
+            column.addEventListener('drop', e => {
+                e.preventDefault();
+                column.style.background = '';
+                
+                if (draggedTaskId) {
+                    const newStatus = column.id.replace('Column', '');
+                    const task = tasks.find(t => t.id === draggedTaskId);
+                    if (task) {
+                        task.status = newStatus;
+                        renderTasks();
+                        saveToLocalStorage();
+                    }
+                }
+            });
+        });
+
+        // Modal Functions
+        function openModal() {
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').classList.remove('active');
+        }
+
+        // Form Submission
+        document.getElementById('taskForm').addEventListener('submit', e => {
+            e.preventDefault();
+            
+            const newTask = {
+                id: tasks.length + 1,
+                title: document.getElementById('taskTitle').value,
+                agent: document.getElementById('taskAgent').value,
+                status: 'new',
+                time: 'Just now'
+            };
+
+            tasks.unshift(newTask);
+            renderTasks();
+            saveToLocalStorage();
+            closeModal();
+            document.getElementById('taskForm').reset();
+        });
+
+        // LocalStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('agentDashboardTasks', JSON.stringify(tasks));
+            localStorage.setItem('agentDashboardConversations', JSON.stringify(conversations));
+        }
+
+        function loadFromLocalStorage() {
+            constStorage.getItem(' savedTasks = localagentDashboardTasks');
+            const savedConversations = localStorage.getItem('agentDashboardConversations');
+            
+            if (savedTasks) tasks = JSON.parse(savedTasks);
+            if (savedConversations) conversations = JSON.parse(savedConversations);
+        }
+
+        // Initialize
+        loadFromLocalStorage();
+        renderAgents();
+        renderConversations();
+        renderTasks();
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Randomly update agent statuses
+            agents.forEach(agent => {
+                if (Math.random() > 0.8) {
+                    agent.status = agent.status === 'active' ? 'idle' : 'active';
+                }
+            });
+            renderAgents();
+        }, 30000);
+    </script>
+</body>
+</html>
